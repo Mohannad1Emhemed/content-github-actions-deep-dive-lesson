@@ -87,8 +87,8 @@ jobs:
               
     
 
-      - name: Wait 45 seconds
-        run: sleep 45
+      - name: Wait 30 seconds
+        run: sleep 30
               
       - name: Invoke tst function
         run: |
@@ -98,8 +98,8 @@ jobs:
           if jq -e '.StatusCode != 200' out; then
             exit 1
           fi
-      - name: Wait 45 seconds
-        run: sleep 45
+      - name: Wait 30 seconds
+        run: sleep 30
       - name: Destroy test function
         if: ${{ always() }}
         run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
