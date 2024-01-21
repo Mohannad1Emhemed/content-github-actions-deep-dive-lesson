@@ -10,14 +10,14 @@ def lambda_handler(event, context):
     """
     print('Starting functions\n---------------------------------------------')
 
-    if event["input"] == "Hello":
+    if "input" not in event:
+        raise ValueError("Input not provided in the event")
 
+    input_value = event["input"]
+
+    if input_value == "Hello":
         return "World"
-
-    if event["input"] == "Hi":
-
+    elif input_value == "Hi":
         return "Hi There"
-
     else:
-
-        raise
+        raise ValueError(f"Unsupported input value: {input_value}")
