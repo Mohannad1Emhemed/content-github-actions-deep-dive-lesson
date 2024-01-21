@@ -85,7 +85,13 @@ jobs:
         run: |
             aws lambda create-function --function-name test-function-${{ matrix.input }} --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-lambda-role --handler lambda_function.lambda_handler --runtime python3.8 \
               --code S3Bucket=my-bucket-github-actions-course-deep-dive,S3Key=${{ github.sha }}.zip
+    
 
+      - name: Wait 180 seconds
+        run: sleep 180
+      - name: Destroy test function
+        if: ${{ always() }}
+        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
               
       - name: Invoke tst function
         run: |
