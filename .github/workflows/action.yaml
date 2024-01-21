@@ -94,10 +94,12 @@ jobs:
             if grep -q "Error" out; then
               exit1
             fi
+      - name: Wait 30 seconds
+        run: sleep 30
       - name: Destroy test function
         if: ${{ always() }}
-        run: |
-            aws lambda delete-function --function-name test-function-${{ matrix.input }}
+        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
+
 
   deploy:
     runs-on: ubuntu-latest
@@ -109,41 +111,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1    
-      - name: Create test function
-        run: |
-            aws lambda create-function --function-name test-function-${{ matrix.input }} --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-lambda-role --handler lambda_function.lambda_handler --runtime python3.8 --code S3Bucket=my-bucket-github-actions-course-deep-dive,S3Key=${{ github.sha }}.zip             
-      - name: Wait 30 seconds
-        run: sleep 30
-              
-      - name: Invoke tst function
-        run: |
-          aws lambda invoke --function-name test-function-${{ matrix.input }} --payload $(echo "{\"input\": \"${{ matrix.input }}\"}" | base64) --output json out 
-                        
-          if jq -e '.StatusCode != 200' out; then
-            exit 1
-          fi
-      - name: Wait 30 seconds
-        run: sleep 30
-      - name: Destroy test function
-        if: ${{ always() }}
-        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
- 
-  deploy2:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
       - name: Update function code
         run: |
-            aws lambda update-function-code \
-              --function-name my-function \
-              --s3-bucket my-bucket-github-actions-course-deep-dive \
-              --s3-key ${{ github.repository }}/${{ github.sha }}.zip \
+            aws lambda update-function \
+              --function-name my-fucntion \
+              --S3Bucket my-bucket-github-actions-course-deep-dive
+              --S3Key ${{ github.sha }}.zip 
               --publish
 
   docs:
@@ -158,8 +131,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONFIG_FILE: mkdocs.yaml
           
-              --function-name my-function \
-              --s3-bucket my-bucket-github-actions-course-deep-dive \
-              --s3-key ${{ github.sha }}.zip \
-              --publish 
 
