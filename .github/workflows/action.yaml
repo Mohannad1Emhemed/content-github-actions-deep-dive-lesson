@@ -96,7 +96,7 @@ jobs:
             
             
           if grep -q "Error" out; then
-            exit1
+            exit 1
           fi
       - name: Wait 45 seconds
         run: sleep 45
