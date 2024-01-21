@@ -1,6 +1,8 @@
 name: Deploy my Lambda Function
 
 # trigger on all push events to main branch
+
+
 on: 
   push:
     branches:
@@ -10,6 +12,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+
     steps: 
       - name: Check out code
         uses: actions/checkout@v2
@@ -17,16 +20,22 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
+
       - name: Install linting libraries
         run: |
             cd function
             pip install flake8
       - name: Lint with flake8
         run: |
+
             # Select identifies which errors should cause the job to fail
             flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
             # The exit zero flag will show errors as warnings and not fail the run
             flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+            
+
+    
 
   build:
     runs-on: ubuntu-latest
@@ -34,10 +43,12 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
+
       - name: Install libraries
         run: |
             cd function
@@ -52,25 +63,35 @@ jobs:
         with:
           name: zipped-bundle
           path: ${{ github.sha }}.zip
+
   
+
+
+
   upload:
     runs-on: ubuntu-latest
     needs: build
     steps:
+
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: zipped-bundle
       - name: Configure AWS credentials
+
+
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - name: Upload to S3
-        run: aws s3 cp ${{ github.sha }}.zip s3://<YOUR BUCKET NAME HERE>/${{ github.repository }}/${{ github.sha }}.zip
+        run: aws s3 cp ${{ github.sha }}.zip s3://my-bucket-github-actions-course-deep-dive/${{ github.repository }}/${{ github.sha }}.zip
 
   nonprod:
+        run: aws s3 cp ${{ github.sha }}.zip s3://my-bucket-github-actions-course-deep-dive/${{ github.sha }}.zip
+  test: 
+
     runs-on: ubuntu-latest
     needs: upload
     strategy:
@@ -86,9 +107,9 @@ jobs:
       - name: Create test function
         run: |
             aws lambda create-function --function-name test-function-${{ matrix.input }} \
-              --code S3Bucket=<YOUR BUCKET NAME HERE>,S3Key=${{ github.repository }}/${{ github.sha }}.zip \
+              --code S3Bucket=my-bucket-github-actions-course-deep-dive,S3Key=${{ github.repository }}/${{ github.sha }}.zip \
               --handler lambda_function.lambda_handler --runtime python3.8 \
-              --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/<YOUR ROLE NAME HERE>
+              --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-lambda-role
       - name: Invoke test function 
         run: |
             aws lambda invoke --function-name test-function-${{ matrix.input }} \
@@ -107,6 +128,37 @@ jobs:
     needs: upload
     steps:
       - name: Configure AWS credentials
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1    
+      - name: Create test function
+        run: |
+            aws lambda create-function --function-name test-function-${{ matrix.input }} --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-lambda-role --handler lambda_function.lambda_handler --runtime python3.8 --code S3Bucket=my-bucket-github-actions-course-deep-dive,S3Key=${{ github.sha }}.zip   
+              
+    
+
+      - name: Wait 30 seconds
+        run: sleep 30
+              
+      - name: Invoke tst function
+        run: |
+          aws lambda invoke --function-name test-function-${{ matrix.input }} --payload $(echo "{\"input\": \"${{ matrix.input }}\"}" | base64) --output json out 
+            
+            
+          if jq -e '.StatusCode != 200' out; then
+            exit 1
+          fi
+      - name: Wait 30 seconds
+        run: sleep 30
+      - name: Destroy test function
+        if: ${{ always() }}
+        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
+ 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -115,8 +167,9 @@ jobs:
       - name: Update function code
         run: |
             aws lambda update-function-code \
-              --function-name <YOUR FUNCTION NAME HERE> \
-              --s3-bucket <YOUR BUCKET NAME HERE> \
+
+              --function-name my-function \
+              --s3-bucket my-bucket-github-actions-course-deep-dive \
               --s3-key ${{ github.repository }}/${{ github.sha }}.zip \
               --publish
 
@@ -131,3 +184,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CONFIG_FILE: mkdocs.yaml
+          
+              --function-name my-function \
+              --s3-bucket my-bucket-github-actions-course-deep-dive \
+              --s3-key ${{ github.sha }}.zip \
+              --publish 
+
