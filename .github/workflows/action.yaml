@@ -117,8 +117,8 @@ jobs:
         run: |
             aws lambda update-function-code \
               --function-name my-fucntion \
-              --S3Bucket my-bucket-github-actions-course-deep-dive
-              --S3Key ${{ github.sha }}.zip 
+              --S3Bucket my-bucket-github-actions-course-deep-dive \
+              --S3Key ${{ github.sha }}.zip \
               --publish
 
   docs:
