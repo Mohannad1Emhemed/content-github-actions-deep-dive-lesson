@@ -87,11 +87,8 @@ jobs:
               --code S3Bucket=my-bucket-github-actions-course-deep-dive,S3Key=${{ github.sha }}.zip
     
 
-      - name: Wait 180 seconds
-        run: sleep 180
-      - name: Destroy test function
-        if: ${{ always() }}
-        run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
+      - name: Wait 90 seconds
+        run: sleep 90
               
       - name: Invoke tst function
         run: |
@@ -101,8 +98,8 @@ jobs:
           if grep -q "Error" out; then
             exit1
           fi
-      - name: Wait 30 seconds
-        run: sleep 30
+      - name: Wait 90 seconds
+        run: sleep 90
       - name: Destroy test function
         if: ${{ always() }}
         run: aws lambda delete-function --function-name test-function-${{ matrix.input }}
