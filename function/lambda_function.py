@@ -15,9 +15,14 @@ def lambda_handler(event, context):
 
     input_value = event["input"]
 
+
+    if event["input"] == "Hi":
+        
+        return "Hi There"
+
+
     if input_value == "Hello":
         return "World"
-    elif input_value == "Hi":
-        return "Hi There"
+
     else:
         raise ValueError(f"Unsupported input value: {input_value}")
