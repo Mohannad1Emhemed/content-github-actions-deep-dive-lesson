@@ -92,8 +92,8 @@ jobs:
               
       - name: Invoke tst function
         run: |
-          aws lambda invoke --function-name test-function-${{ matrix.input }}  \ 
-            --payload $(echo "{\"input\": \"${{ matrix.input }}\"}" | base64) \
+          aws lambda invoke --function-name test-function-${{ matrix.input }} --payload $(echo "{\"input\": \"${{ matrix.input }}\"}" | base64) \ 
+            
             --output json out
           if grep -q "Error" out; then
             exit1
